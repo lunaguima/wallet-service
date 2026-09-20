@@ -3,6 +3,7 @@ package com.microsservicos.wallet_service;
 import com.microsservicos.wallet_service.domain.Wallet;
 import com.microsservicos.wallet_service.dto.WalletResponse;
 import com.microsservicos.wallet_service.exception.InsufficientBalanceException;
+import com.microsservicos.wallet_service.exception.WalletAlreadyExistsException;
 import com.microsservicos.wallet_service.exception.WalletNotFoundException;
 import com.microsservicos.wallet_service.repository.WalletRepository;
 import com.microsservicos.wallet_service.service.WalletService;
@@ -89,5 +90,31 @@ class WalletServiceTest {
 
         assertEquals(new BigDecimal("150.00"), response.balance());
         verify(walletRepository, times(1)).save(wallet);
+    }
+
+    @Test
+    @DisplayName("Deve criar carteira com saldo zero")
+    void shouldCreateWalletWithZeroBalance() {
+        when(walletRepository.existsByUserId(userId)).thenReturn(false);
+        when(walletRepository.save(any(Wallet.class))).thenAnswer(invocation -> {
+            Wallet w = invocation.getArgument(0);
+            w.setId(UUID.randomUUID());
+            w.setBalance(BigDecimal.ZERO);
+            return w;
+        });
+
+        WalletResponse response = walletService.create(userId);
+
+        assertEquals(userId, response.userId());
+        assertEquals(BigDecimal.ZERO, response.balance());
+    }
+
+    @Test
+    @DisplayName("Deve lançar WalletAlreadyExistsException quando a carteira já existir")
+    void shouldThrowExceptionWhenWalletAlreadyExists() {
+        when(walletRepository.existsByUserId(userId)).thenReturn(true);
+
+        assertThrows(WalletAlreadyExistsException.class, () -> walletService.create(userId));
+        verify(walletRepository, never()).save(any(Wallet.class));
     }
 }

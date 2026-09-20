@@ -1,5 +1,6 @@
 package com.microsservicos.wallet_service.controller;
 
+import com.microsservicos.wallet_service.dto.CreateWalletRequest;
 import com.microsservicos.wallet_service.dto.OperationRequest;
 import com.microsservicos.wallet_service.dto.WalletResponse;
 import com.microsservicos.wallet_service.service.WalletService;
@@ -8,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.UUID;
 
 @RestController
@@ -16,6 +18,14 @@ import java.util.UUID;
 public class WalletController {
 
     private final WalletService walletService;
+
+    @PostMapping
+    public ResponseEntity<WalletResponse> create(@RequestBody @Valid CreateWalletRequest request) {
+        WalletResponse response = walletService.create(request.userId());
+        return ResponseEntity
+                .created(URI.create("/api/wallets/" + response.userId()))
+                .body(response);
+    }
 
     @GetMapping("/{userId}")
     public ResponseEntity<WalletResponse> getWallet(@PathVariable UUID userId) {

@@ -14,31 +14,35 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(WalletNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(WalletNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
-                "timestamp", Instant.now(),
-                "status", 404,
-                "error", "Not Found",
-                "message", ex.getMessage()
-        ));
+        return build(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(WalletAlreadyExistsException.class)
+    public ResponseEntity<Map<String, Object>> handleAlreadyExists(WalletAlreadyExistsException ex) {
+        return build(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     @ExceptionHandler(InsufficientBalanceException.class)
     public ResponseEntity<Map<String, Object>> handleInsufficientBalance(InsufficientBalanceException ex) {
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(Map.of(
-                "timestamp", Instant.now(),
-                "status", 422,
-                "error", "Unprocessable Entity",
-                "message", ex.getMessage()
-        ));
+        return build(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+        return build(HttpStatus.BAD_REQUEST, "Dados da requisição inválidos");
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    private ResponseEntity<Map<String, Object>> build(HttpStatus status, String message) {
+        return ResponseEntity.status(status).body(Map.of(
                 "timestamp", Instant.now(),
-                "status", 400,
-                "error", "Bad Request",
-                "message", "Dados da requisição inválidos"
+                "status", status.value(),
+                "error", status.getReasonPhrase(),
+                "message", message
         ));
     }
 }
